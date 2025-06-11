@@ -4,47 +4,56 @@
     <meta charset="UTF-8">
     <title>🎨 Free Image Generator</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Loader spinner */
+        #loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: #fff;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
-        <h1 style="font-size: 3rem; font-weight: bold; background: linear-gradient(to right, #ff416c, #ff4b2b); -webkit-background-clip: text; color: transparent;">
-            🎨 Free Image Generator
-        </h1>
-        <p>Generate beautiful AI images using Pollinations API</p>
+        <h1>🎨 Free Image Generator</h1>
+        <p>Generate beautiful AI images using multiple models</p>
     </div>
 
     <div class="container">
-        <form id="generate-form">
+        <form id="imageForm">
             <div class="form-group">
                 <label for="prompt">Enter Your Prompt:</label>
-                <textarea id="prompt" name="prompt" rows="5" placeholder="Describe the image you want..." required></textarea>
+                <textarea id="prompt" rows="4" placeholder="Describe the image you want..." required></textarea>
             </div>
 
             <div class="form-group">
                 <label for="model">Select Model:</label>
-                <select id="model" name="model" required>
-                    <option value="">Select Model</option>
+                <select id="model" required>
+                    <option value="Elixpo-Art">🎭 Elixpo-Art</option>
                     <option value="flux">⚡ flux</option>
                     <option value="turbo">🚀 turbo</option>
-                    <option value="boltning">🎭 Elixpo-Art</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label for="aspect_ratio">Aspect Ratio:</label>
-                <select id="aspect_ratio" name="aspect_ratio">
+                <select id="aspect_ratio">
                     <option value="1:1">Square (1:1)</option>
                     <option value="16:9">Landscape (16:9)</option>
                     <option value="9:16">Portrait (9:16)</option>
                 </select>
             </div>
 
-            <div class="form-group">
-                <button type="submit">Generate 🔥</button>
-            </div>
+            <button type="submit">Generate 🔥</button>
         </form>
 
-        <div id="result" style="margin-top:30px;"></div>
+        <div id="loading">Generating Image...</div>
+
+        <div id="result" class="result" style="margin-top: 30px;"></div>
     </div>
 
     <footer>
@@ -52,27 +61,44 @@
     </footer>
 
     <script>
-        const form = document.getElementById("generate-form");
-        const result = document.getElementById("result");
+        const model_mapping = {
+            "Elixpo-Art": "boltning",
+            "flux": "flux",
+            "turbo": "turbo"
+        };
 
-        form.addEventListener("submit", async (e) => {
+        document.getElementById('imageForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const prompt = document.getElementById("prompt").value;
-            const model = document.getElementById("model").value;
-            const aspect_ratio = document.getElementById("aspect_ratio").value;
+            const prompt = encodeURIComponent(document.getElementById('prompt').value);
+            const model = document.getElementById('model').value;
+            const aspect_ratio = document.getElementById('aspect_ratio').value;
 
-            if (!model) {
-                alert("Please select a model.");
-                return;
+            const modelCode = model_mapping[model];
+            let url = `https://image.pollinations.ai/prompt/${prompt}`;
+            if (modelCode) {
+                url += `?model=${modelCode}&aspectRatio=${aspect_ratio}`;
+            } else {
+                url += `?aspectRatio=${aspect_ratio}`;
             }
 
-            result.innerHTML = "<p>Generating image... please wait ⏳</p>";
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').innerHTML = '';
 
-            const encodedPrompt = encodeURIComponent(prompt);
-            const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?model=${model}&aspectRatio=${aspect_ratio}`;
-
-            result.innerHTML = `<img src="${url}" style="max-width:100%;border-radius:10px;">`;
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    document.getElementById('result').innerHTML = `
+                        <h2>Generated Image:</h2>
+                        <img src="${url}" alt="Generated Image" style="max-width:100%;border-radius:15px;">
+                    `;
+                } else {
+                    document.getElementById('result').innerText = 'Failed to generate image.';
+                }
+            } catch (err) {
+                document.getElementById('result').innerText = 'Error: ' + err.message;
+            }
+            document.getElementById('loading').style.display = 'none';
         });
     </script>
 </body>
